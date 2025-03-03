@@ -1,29 +1,16 @@
 from tqdm import tqdm
-from .base import get_stats, merge_vocab
+from .base import get_stats, merge_vocab, Tokenizer
 
-class BasicTokenizer:
+class BasicTokenizer(Tokenizer):
     """Basic Byte Pair Encoding tokenizer
     args:
         vocab: list of integers
         merge_id: integer
     """
     def __init__(self):
-        self.merges = {}
-        self.vocab = self._build_vocab()
-        
-    def _build_vocab(self):
-        """building the initial vocabulary with the range of 256
-        args:
-            None
-        
-        returns: initial vocabulary dictionary
-        """
-        vocab = {idx: bytes([idx]) for idx in range(256)}
-        for (p0, p1), idx in self.merges.items():
-            vocab[idx] = vocab[p0] + vocab[p1]
-        
-        # print("initial vocab",vocab)
-        return vocab
+        # self.merges = {}
+        # self.vocab = self._build_vocab()
+        super().__init__()
     
     def fit(self, text, vocab_size, verbose=False):
         """train the tokenizer given the text corpus and vocab size
@@ -86,6 +73,9 @@ class BasicTokenizer:
         
         returns: string
         """
+        for id in ids:
+            print("id:", id, "vocab:", self.vocab[id], "decode:", self.vocab[id].decode("utf-8", errors="replace"), "\n")
+
         tokens = b"".join(self.vocab[idx] for idx in ids)
         text = tokens.decode("utf-8", errors="replace")
         return text

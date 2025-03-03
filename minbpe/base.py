@@ -10,7 +10,7 @@ def get_stats(ids):
         counts[pair] = counts.get(pair, 0) + 1
     return counts
 
-def merge_vocab(vocab, stats, merge_id):
+def merge_vocab(ids, pair, merge_id):
     """merge the most frequent pair of ids in the vocabulary
     args:
         vocab: list of integers
@@ -21,12 +21,12 @@ def merge_vocab(vocab, stats, merge_id):
     """
     new_vocab = []
     i = 0
-    while i < len(vocab):
-        if i < len(vocab) - 1 and (vocab[i], vocab[i + 1]) in stats:
+    while i < len(ids):
+        if ids[i] == pair[0] and i < len(ids) - 1 and ids[i+1] == pair[1]:
             new_vocab.append(merge_id)
             i += 2
         else:
-            new_vocab.append(vocab[i])
+            new_vocab.append(ids[i])
             i += 1
     return new_vocab
 

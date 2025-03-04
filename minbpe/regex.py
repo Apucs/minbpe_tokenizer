@@ -18,20 +18,23 @@ class RegexTokenizer(Tokenizer):
         self.inverse_special_tokens = {}
 
     def fit(self, text, vocab_size, verbose=False):
+        assert vocab_size >= 256
+
         num_merges = vocab_size - 256
         text_chunks = self.compiled_pattern.findall(text)
         ids = [list(ch.encode("utf-8")) for ch in text_chunks]
         
         merges = {}
         vocab = self.vocab.copy()
-        stats = {}
+        
 
         for i in tqdm(range(num_merges)):
+            stats = {}
             for chunk_ids in ids:
                 get_stats(chunk_ids, stats)
 
             most_frequent_pair = max(stats, key=stats.get)
-            idx = len(self.vocab) + i
+            idx = 256 + i
             ids = [merge_vocab(chunk_ids, most_frequent_pair, idx) for chunk_ids in ids]
             merges[most_frequent_pair] = idx
             vocab[idx] = vocab[most_frequent_pair[0]] + vocab[most_frequent_pair[1]]
@@ -125,7 +128,7 @@ class RegexTokenizer(Tokenizer):
         part_bytes = []
         for idx in ids:
             if idx in self.vocab:
-                print(f"idx: {idx}, vocab: {self.vocab[idx]}, decode: {self.vocab[idx].decode("utf-8", errors="replace")}\n")
+                # print(f"idx: {idx}, vocab: {self.vocab[idx]}, decode: {self.vocab[idx].decode("utf-8", errors="replace")}\n")
                 part_bytes.append(self.vocab[idx])
             elif idx in self.inverse_special_tokens:
                 part_bytes.append(self.inverse_special_tokens[idx].encode("utf-8"))

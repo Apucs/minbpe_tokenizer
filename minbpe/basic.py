@@ -30,7 +30,7 @@ class BasicTokenizer(Tokenizer):
         for i in tqdm(range(num_merges)):
             stats = get_stats(ids)
             most_frequent_pair = max(stats, key=stats.get)
-            idx = len(vocab)+i
+            idx = 256+i
             ids = merge_vocab(ids, most_frequent_pair, idx)
             merges[most_frequent_pair] = idx
             # print("\n", len(vocab), idx, vocab)
@@ -73,9 +73,8 @@ class BasicTokenizer(Tokenizer):
         
         returns: string
         """
-        for id in ids:
-            print("id:", id, "vocab:", self.vocab[id], "decode:", self.vocab[id].decode("utf-8", errors="replace"), "\n")
-
+        # for id in ids:
+        #     print("id:", id, "vocab:", self.vocab[id], "decode:", self.vocab[id].decode("utf-8", errors="replace"), "\n")
         tokens = b"".join(self.vocab[idx] for idx in ids)
         text = tokens.decode("utf-8", errors="replace")
         return text

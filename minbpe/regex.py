@@ -80,7 +80,7 @@ class RegexTokenizer(Tokenizer):
             ids.extend(chunk_ids)
         return ids
     
-    def encoder(self, text, allowed_special="none_raise"):
+    def encode(self, text, allowed_special="none_raise"):
         """
         Unlike encode_ordinary, this function handles special tokens.
         allowed_special: can be "all"|"none"|"none_raise" or a custom set of special tokens
@@ -123,7 +123,7 @@ class RegexTokenizer(Tokenizer):
                 ids.extend(self.encode_ordinary(part))
         return ids
     
-    def decoder(self, ids):
+    def decode(self, ids):
         # given ids (list of integers), return Python string
         part_bytes = []
         for idx in ids:

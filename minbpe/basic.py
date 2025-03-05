@@ -46,7 +46,7 @@ class BasicTokenizer(Tokenizer):
         print(f"trained vocab with {len(vocab)} tokens")
 
 
-    def encoder(self, text):
+    def encode(self, text):
         """encode a text
         args:
             text: string
@@ -66,7 +66,7 @@ class BasicTokenizer(Tokenizer):
         
         return tokens
     
-    def decoder(self, ids):
+    def decode(self, ids):
         """decode a list of ids
         args:
             ids: list of integers

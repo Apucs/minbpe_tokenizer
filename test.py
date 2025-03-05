@@ -1,4 +1,4 @@
-from minbpe import BasicTokenizer, RegexTokenizer
+from minbpe import BasicTokenizer, RegexTokenizer, GPT4Tokenizer
 
 with open("tests/taylorswift.txt", "r") as file:
     text = file.read()
@@ -12,26 +12,41 @@ with open("tests/taylorswift.txt", "r") as file:
 valtext = "hello123!!!?     (안녕하세요!) 😉"
 print(valtext)
 
-# encoded = basic_tokenizer.encoder(valtext)
+# encoded = basic_tokenizer.encode(valtext)
 # print("length of encoded ids with basic tokenizer:", len(encoded), "encoded:",encoded)
-# decoded = basic_tokenizer.decoder(encoded)
+# decoded = basic_tokenizer.decode(encoded)
 # # print(encoded)
 # # print(decoded)
 # print(valtext == decoded)
 
-regex_tokenizer = RegexTokenizer()
-regex_tokenizer.fit(text, vocab_size=5000, verbose=False)  #training the vocab
-regex_tokenizer.save("regex")
+# regex_tokenizer = RegexTokenizer()
+# regex_tokenizer.fit(text, vocab_size=5000, verbose=False)  #training the vocab
+# regex_tokenizer.save("regex")
 
-regex_tokenizer_2 = RegexTokenizer()
-regex_tokenizer_2.load("regex.model")
-print(regex_tokenizer_2.pattern)
-print(regex_tokenizer_2.special_tokens)
-print(regex_tokenizer_2.merges)
-print(regex_tokenizer_2.vocab)
+# regex_tokenizer_2 = RegexTokenizer()
+# regex_tokenizer_2.load("regex.model")
+# print(regex_tokenizer_2.pattern)
+# print(regex_tokenizer_2.special_tokens)
+# print(regex_tokenizer_2.merges)
+# print(regex_tokenizer_2.vocab)
 
-encoded = regex_tokenizer.encoder(valtext)
-print("length of encoded ids with regex tokenizer:", len(encoded), "encoded:",encoded)
-decoded = regex_tokenizer.decoder(encoded)
-print(f"decoded: {decoded}")
-print(valtext == decoded)
+# encoded = regex_tokenizer.encode(valtext)
+# print("length of encoded ids with regex tokenizer:", len(encoded), "encoded:",encoded)
+# decoded = regex_tokenizer.decode(encoded)
+# print(f"decoded: {decoded}")
+# print(valtext == decoded)
+
+gpt4_tokenizer = GPT4Tokenizer()
+gpt4_tokenizer.save_vocab("models/gpt4.vocab")
+# gpt4tok = GPT4Tokenizer()
+# gpt4tok.load("models/gpt4.model")
+# print(gpt4tok.pattern)
+# print(gpt4tok.special_tokens)
+# print(len(gpt4tok.merges))
+# print(len(gpt4tok.vocab))
+
+# encoded = gpt4tok.encode(valtext)
+# print("length of encoded ids with gpt4 tokenizer:", len(encoded), "encoded:",encoded)
+# decoded = gpt4tok.decode(encoded)
+# print(f"decoded: {decoded}")
+# print(valtext == decoded)

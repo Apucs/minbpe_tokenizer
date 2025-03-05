@@ -1,3 +1,4 @@
+import os
 import tiktoken
 from .regex import RegexTokenizer
 
@@ -47,20 +48,89 @@ GPT4_SPECIAL_TOKENS = {
     '<|endofprompt|>': 100276
 }
 
+class GPT4Tokenizer(RegexTokenizer):
+    """Lightweight wrapper on RegexTokenizer that matches GPT-4's tokenizer."""
 
-enc = tiktoken.get_encoding("cl100k_base")
-mergeable_ranks = enc._mergeable_ranks
+    def __init__(self):
+        super().__init__(pattern=GPT4_SPLIT_PATTERN)
+        # get the official tokenizer and its merges
+        enc = tiktoken.get_encoding("cl100k_base")
+        mergeable_ranks = enc._mergeable_ranks
+        # the merges are those of gpt4, but we have to recover them
+        self.merges = recover_merges(mergeable_ranks)
+        # print(f"recovered {len(self.merges)} merges, {dict(list(self.merges.items())[:500])}")
+        # reconstruct the vocab from the merges
+        vocab = {idx: bytes([idx]) for idx in range(256)}
+        for (p0, p1), idx in self.merges.items():
+            vocab[idx] = vocab[p0] + vocab[p1]
+        self.vocab = vocab
+        # now here is another tricky part.
+        # for some reason, the tokens corresponding to individual bytes
+        # are permuted in a different order. This is completely non-sensical
+        # and probably historical, but therefore we have to deal with it here.
+        self.byte_shuffle = {i: mergeable_ranks[bytes([i])] for i in range(256)}
+        self.inverse_byte_shuffle = {v: k for k, v in self.byte_shuffle.items()}
+        # finally register the special tokens
+        self.register_special_tokens(GPT4_SPECIAL_TOKENS)
 
-print(dict(list(mergeable_ranks.items())[:5]))
-merges = recover_merges(mergeable_ranks)
-print(dict(list(merges.items())[:5]))
+        # print(dict(list(mergeable_ranks.items())[:5]))
+        # print(dict(list(self.merges.items())[:5]))
+        # print(dict(list(self.vocab.items())[:5]), dict(list(vocab.items())[-5:]),"\n")
+        # print(self.byte_shuffle)
+        # print(self.inverse_byte_shuffle)
 
-vocab = {idx: bytes([idx]) for idx in range(256)}
-for (p0, p1), idx in merges.items():
-    vocab[idx] = vocab[p0] + vocab[p1]
+    def _encode_chunk(self, text_bytes):
+        # before we start processing bytes, we have to permute them
+        text_bytes = bytes(self.byte_shuffle[b] for b in text_bytes)
+        ids = super()._encode_chunk(text_bytes)
+        return ids
 
-print(dict(list(vocab.items())[:5]), dict(list(vocab.items())[-5:]),"\n")
+    def decode(self, ids):
+        # we have to un-permute the bytes before we decode
+        text_bytes = b"".join(self.vocab[idx] for idx in ids)
+        text_bytes = bytes(self.inverse_byte_shuffle[b] for b in text_bytes)
+        text = text_bytes.decode("utf-8", errors="replace")
+        return text
 
-byte_shuffle = {i: mergeable_ranks[bytes([i])] for i in range(256)}
-print(byte_shuffle)
-inverse_byte_shuffle = {v: k for k, v in byte_shuffle.items()}
+    # this is a pretrained tokenizer, it is not intended to be trained
+    def fit(self, text, vocab_size, verbose=False):
+        raise NotImplementedError
+
+    # save/load would require some thought.
+    # we'd have to change save/load of base to add support for byte_shuffle...
+    # alternatively, we could move byte_shuffle to base class, but that would
+    # mean that we're making ugly our beautiful Tokenizer just to support
+    # the GPT-4 tokenizer and its weird historical quirks around byte_shuffle.
+    # def save(self, file_prefix):
+    #     raise NotImplementedError("GPT4Tokenizer cannot be saved.")
+
+    # def load(self, model_file):
+    #     raise NotImplementedError("GPT4Tokenizer cannot be loaded.")
+
+    def save_vocab(self, vocab_file):
+        # just for visualization purposes let's output the GPT-4 tokens
+        # in the exact same format as the base class would.
+        # simple run as:
+        # python -c "from minbpe import GPT4Tokenizer; GPT4Tokenizer().save_vocab('gpt4.vocab')"
+        from .base import render_token
+
+        directory = os.path.dirname(vocab_file)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+
+        # build vocab being mindful of the byte shuffle
+        vocab = {idx: bytes([self.inverse_byte_shuffle[idx]]) for idx in range(256)}
+        for (p0, p1), idx in self.merges.items():
+            vocab[idx] = vocab[p0] + vocab[p1]
+        # now merge the shuffled bytes and write to file
+        inverted_merges = {idx: pair for pair, idx in self.merges.items()}
+        with open(vocab_file, "w", encoding="utf-8") as f:
+            for idx, token in vocab.items():
+                s = render_token(token)
+                if idx in inverted_merges:
+                    idx0, idx1 = inverted_merges[idx]
+                    s0 = render_token(vocab[idx0])
+                    s1 = render_token(vocab[idx1])
+                    f.write(f"[{s0}][{s1}] -> [{s}] {idx}\n")
+                else:
+                    f.write(f"[{s}] {idx}\n")

@@ -66,7 +66,7 @@ class Tokenizer:
          # train a vocabulary of size vocab_size from given text
          raise NotImplementedError
     
-    def encoder(self, text):
+    def encode(self, text):
         """encode a text
         args:
             text: string
@@ -75,7 +75,7 @@ class Tokenizer:
         """
         raise NotImplementedError
     
-    def decoder(self, ids):
+    def decode(self, ids):
         """decode a list of integers
         args:
             ids: list of integers

@@ -101,19 +101,20 @@ def test_wikipedia_example(tokenizer_factory):
     """
     tokenizer = tokenizer_factory()
     text = "aaabdaaabac"
-    tokenizer.train(text, 256 + 3)
+    tokenizer.fit(text, 256 + 3)
     ids = tokenizer.encode(text)
     assert ids == [258, 100, 258, 97, 99]
     assert tokenizer.decode(tokenizer.encode(text)) == text
 
 @pytest.mark.parametrize("special_tokens", [{}, special_tokens])
 def test_save_load(special_tokens):
-    # take a bit more complex piece of text and train the tokenizer, chosen at random
+    # take a bit more complex piece of text and fit the tokenizer, chosen at random
     text = llama_text
     # create a Tokenizer and do 64 merges
     tokenizer = RegexTokenizer()
-    tokenizer.train(text, 256 + 64)
+    tokenizer.fit(text, 256 + 64)
     tokenizer.register_special_tokens(special_tokens)
+    # print(f"special tokens {tokenizer.special_tokens}, {tokenizer.inverse_special_tokens}")
     # verify that decode(encode(x)) == x
     assert tokenizer.decode(tokenizer.encode(text, "all")) == text
     # verify that save/load work as expected
@@ -122,6 +123,7 @@ def test_save_load(special_tokens):
     tokenizer.save("test_tokenizer_tmp")
     # re-load the tokenizer
     tokenizer = RegexTokenizer()
+    tokenizer.register_special_tokens(special_tokens)
     tokenizer.load("test_tokenizer_tmp.model")
     # verify that decode(encode(x)) == x
     assert tokenizer.decode(ids) == text

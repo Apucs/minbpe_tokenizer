@@ -1,3 +1,5 @@
+# tiktoken
+import tiktoken
 from minbpe import BasicTokenizer, RegexTokenizer, GPT4Tokenizer
 
 with open("tests/taylorswift.txt", "r") as file:
@@ -37,7 +39,17 @@ print(valtext)
 # print(valtext == decoded)
 
 gpt4_tokenizer = GPT4Tokenizer()
-gpt4_tokenizer.save_vocab("models/gpt4.vocab")
+print("gpt4 encoded:", gpt4_tokenizer.encode(valtext))
+
+enc = tiktoken.get_encoding("cl100k_base")
+print("openai gpt4 encoded:",enc.encode(valtext))
+
+text = "<|endoftext|>hello world"
+enc = tiktoken.get_encoding("cl100k_base")
+print(enc.encode(text, allowed_special="all"))
+print(gpt4_tokenizer.encode(text, allowed_special="all"))
+
+# gpt4_tokenizer.save_vocab("models/gpt4.vocab")
 # gpt4tok = GPT4Tokenizer()
 # gpt4tok.load("models/gpt4.model")
 # print(gpt4tok.pattern)
